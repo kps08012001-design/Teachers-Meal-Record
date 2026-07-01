@@ -169,7 +169,6 @@
                 mealChart.options.scales.x.ticks.color = textColor;
                 mealChart.options.scales.y.ticks.color = textColor;
                 mealChart.options.scales.y.grid.color = gridColor;
-                mealChart.options.plugins.legend.labels.color = textColor;
                 mealChart.update();
             }
         });
@@ -256,7 +255,6 @@
                         div.className = "bg-gray-100 dark:bg-gray-700 p-3 rounded-lg border border-gray-200 dark:border-gray-600 flex justify-between items-center";
                         
                         let buttonsHtml = '';
-                        // မှတ်တမ်းတွင် ID ပါမှသာ Edit နှင့် Delete ခလုတ်များကို ပြပေးမည်
                         if (record.ID) {
                             buttonsHtml = `
                                 <div class="flex gap-2">
@@ -314,6 +312,22 @@
                 const textColor = isDark ? '#d1d5db' : '#374151'; 
                 const gridColor = isDark ? '#374151' : '#e5e7eb';
 
+                // ဆရာ/ဆရာမ တစ်ယောက်ချင်းစီအတွက် Graph အရောင်များ သီးသန့်ဖြစ်စေရန် ဖန်တီးခြင်း
+                const chartColors = [
+                    'rgba(59, 130, 246, 0.85)',   // Blue
+                    'rgba(239, 68, 68, 0.85)',    // Red
+                    'rgba(16, 185, 129, 0.85)',   // Green
+                    'rgba(245, 158, 11, 0.85)',   // Yellow
+                    'rgba(139, 92, 246, 0.85)',   // Purple
+                    'rgba(236, 72, 153, 0.85)',   // Pink
+                    'rgba(6, 182, 212, 0.85)',    // Cyan
+                    'rgba(249, 115, 22, 0.85)',   // Orange
+                    'rgba(132, 204, 22, 0.85)',   // Lime
+                    'rgba(99, 102, 241, 0.85)'    // Indigo
+                ];
+                
+                const backgroundColors = data.map((_, i) => chartColors[i % chartColors.length]);
+
                 if (mealChart) { mealChart.destroy(); }
                 
                 mealChart = new Chart(ctx, {
@@ -321,12 +335,11 @@
                     data: {
                         labels: labels,
                         datasets: [{
-                            label: 'စားသုံးခဲ့သည့် အကြိမ်အရေအတွက်',
+                            label: 'စားသုံးခဲ့သည့် အကြိမ်ရေ',
                             data: counts,
-                            backgroundColor: 'rgba(59, 130, 246, 0.7)',
-                            borderColor: 'rgba(59, 130, 246, 1)',
-                            borderWidth: 1,
-                            borderRadius: 4
+                            backgroundColor: backgroundColors,
+                            borderRadius: 4,
+                            borderWidth: 0
                         }]
                     },
                     options: {
@@ -338,12 +351,25 @@
                                 grid: { color: gridColor }
                             },
                             x: {
-                                ticks: { color: textColor },
+                                ticks: { 
+                                    color: textColor, 
+                                    font: { family: 'Padauk' },
+                                    maxRotation: 45, // နာမည်ရှည်ပါက စောင်းပြီးပြရန်
+                                    minRotation: 45
+                                },
                                 grid: { display: false }
                             }
                         },
                         plugins: {
-                            legend: { labels: { color: textColor, font: { family: 'Padauk' } } }
+                            // Legend တစ်ခုတည်းပြနေခြင်းကို ဖျောက်ထားမည်။ (အရောင်ကွဲပြားသွားသောကြောင့် ရှင်းလင်းသွားပါပြီ)
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return 'စားသုံးမှု: ' + context.raw + ' ကြိမ်';
+                                    }
+                                }
+                            }
                         }
                     }
                 });
@@ -471,7 +497,6 @@
             if (!url) return;
 
             try {
-                // UI တွင် ဖျက်နေကြောင်း ပြသရန်
                 document.getElementById('recordsContainer').innerHTML = '<div class="text-center py-4"><div class="small-loader"></div> ဖျက်နေပါသည်...</div>';
                 
                 const fetchUrl = `${url}?action=delete&id=${id}`;
@@ -480,7 +505,6 @@
                 
                 if(result.status === 'success') {
                     showAlert('မှတ်တမ်း ဖျက်ပြီးပါပြီ။', 'success');
-                    // Google Sheet တွင်ဖျက်ပြီးပါက ဒေတာများကို Live အသစ်ပြန်ခေါ်မည်
                     loadRecords();
                     loadStats(); 
                 }
